@@ -128,6 +128,7 @@ def _apply_default_arguments(args):
         args.build_tvos = False
         args.build_watchos = False
         args.build_android = False
+        args.build_fuchsia = False
         args.build_benchmarks = False
         args.build_external_benchmarks = False
         args.build_lldb = False
@@ -156,6 +157,9 @@ def _apply_default_arguments(args):
 
     if not args.android or not args.build_android:
         args.build_android = False
+
+    if not args.fuchsia or not args.build_fuchsia:
+        args.build_fuchsia = False
 
     # --validation-test implies --test.
     if args.validation_test:
@@ -213,11 +217,15 @@ def _apply_default_arguments(args):
     if not args.build_android:
         args.test_android_host = False
 
+    if not args.build_fuchsia:
+        args.test_fuchsia_host = False
+
     if not args.host_test:
         args.test_ios_host = False
         args.test_tvos_host = False
         args.test_watchos_host = False
         args.test_android_host = False
+        args.test_fuchsia_host = False
 
 
 def create_argument_parser():
@@ -720,6 +728,12 @@ iterations with -O",
         help="skip building Swift stdlibs for Android")
 
     run_build_group.add_argument(
+        "--skip-build-fuchsia",
+        dest='build_fuchsia',
+        action=arguments.action.disable,
+        help="skip building Swift stdlibs for Fuchsia")
+
+    run_build_group.add_argument(
         "--skip-build-benchmarks",
         dest='build_benchmarks',
         action=arguments.action.disable,
@@ -795,6 +809,12 @@ iterations with -O",
         action=arguments.action.disable,
         help="skip testing Android device targets on the host machine (the "
              "phone itself)")
+    skip_test_group.add_argument(
+        "--skip-test-fuchsia-host",
+        dest='test_fuchsia_host',
+        action=arguments.action.disable,
+        help="skip testing Fuchsia device targets on the host machine (the "
+             "device itself)")
 
     parser.add_argument(
         "-i", "--ios",
@@ -847,6 +867,11 @@ iterations with -O",
     parser.add_argument(
         "--android",
         help="also build for Android",
+        action=arguments.action.enable)
+
+    parser.add_argument(
+        "--fuchsia",
+        help="also build for Fuchsia",
         action=arguments.action.enable)
 
     parser.add_argument(
@@ -953,6 +978,44 @@ iterations with -O",
              "will be deployed. If running host tests, specify the '{}' "
              "directory.".format(android.adb.commands.DEVICE_TEMP_DIR),
         default=android.adb.commands.DEVICE_TEMP_DIR,
+        metavar="PATH")
+
+    fuchsia_group = parser.add_argument_group(
+        title="Build settings for Fuchsia")
+    fuchsia_group.add_argument(
+        "--fuchsia-x86_64-libs",
+        help="Path to the Fuchsia x86_64 shared library directory"
+             "(eg: $FUCHSIA_DIR/out/debug-x86-64/x64-shared)",
+        metavar="PATH")
+    fuchsia_group.add_argument(
+        "--fuchsia-x86_64-sysroot",
+        help="Path to a x86_64 compiled zircon sysroot"
+             "(eg: $FUCHSIA_DIR/out/build-zircon/build-zircon-pc-x86-64/sysroot)",
+        metavar="PATH")
+    fuchsia_group.add_argument(
+        "--fuchsia-aarch64-libs",
+        help="Path to the Fuchsia aarch64 shared library directory"
+             "(eg: $FUCHSIA_DIR/out/debug-aarch64/arm64-shared)",
+        metavar="PATH")
+    fuchsia_group.add_argument(
+        "--fuchsia-aarch64-sysroot",
+        help="Path to a aarch64 compiled zircon sysroot"
+             "(eg: $FUCHSIA_DIR/out/build-zircon/build-zircon-qemu-arm64/sysroot)",
+        metavar="PATH")
+    fuchsia_group.add_argument(
+        "--fuchsia-icu-uc-include",
+        help="Path to a directory containing a headers for ICU UC"
+             "(eg: $FUCHSIA_DIR/third_party/icu/source/common)",
+        metavar="PATH")
+    fuchsia_group.add_argument(
+        "--fuchsia-icu-i18n-include",
+        help="Path to a directory containing a headers for ICU i18n"
+             "(eg: $FUCHSIA_DIR/third_party/icu/source/i18n)",
+        metavar="PATH")
+    fuchsia_group.add_argument(
+        "--fuchsia-toolchain-path",
+        help="Path to a directory containing a Fuchsia clang toolchain"
+             "(eg: $FUCHSIA_DIR/buildtools/linux-x64/clang)",
         metavar="PATH")
 
     parser.add_argument(

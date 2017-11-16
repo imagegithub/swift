@@ -23,7 +23,7 @@ add_swift_library(swiftGlibc ${SWIFT_STDLIB_LIBRARY_BUILD_TYPES} IS_SDK_OVERLAY
 
     SWIFT_COMPILE_FLAGS "${SWIFT_RUNTIME_SWIFT_COMPILE_FLAGS}"
     LINK_FLAGS "${SWIFT_RUNTIME_SWIFT_LINK_FLAGS}"
-    TARGET_SDKS ANDROID CYGWIN FREEBSD LINUX HAIKU
+    TARGET_SDKS ANDROID CYGWIN FREEBSD FUCHSIA LINUX HAIKU
     DEPENDS glibc_modulemap)
 
 add_swift_library(swiftMSVCRT ${SWIFT_STDLIB_LIBRARY_BUILD_TYPES} IS_SDK_OVERLAY
@@ -39,6 +39,7 @@ foreach(sdk ${SWIFT_SDKS})
   if(NOT "${sdk}" STREQUAL "LINUX" AND
      NOT "${sdk}" STREQUAL "FREEBSD" AND
      NOT "${sdk}" STREQUAL "ANDROID" AND
+     NOT "${sdk}" STREQUAL "FUCHSIA" AND
      NOT "${sdk}" STREQUAL "CYGWIN" AND
      NOT "${sdk}" STREQUAL "HAIKU")
     continue()
@@ -48,14 +49,17 @@ foreach(sdk ${SWIFT_SDKS})
     set(arch_subdir "${SWIFT_SDK_${sdk}_LIB_SUBDIR}/${arch}")
     set(module_dir "${SWIFTLIB_DIR}/${arch_subdir}")
 
+    # Determine the location of glibc headers based on the target.
     if("${sdk}" STREQUAL "HAIKU")
       # Haiku doesn't have /usr/include, instead the headers are located
       # at /system/develop/headers.
       set(GLIBC_INCLUDE_PATH "/system/develop/headers/posix")
       set(GLIBC_ARCH_INCLUDE_PATH "/system/develop/headers/posix")
       set(GLIBC_SYSROOT_RELATIVE_INCLUDE_PATH "/system/develop/headers/")
+    elseif(${sdk} STREQUAL "FUCHSIA")
+      set(GLIBC_SYSROOT_RELATIVE_INCLUDE_PATH "/include")
+      set(GLIBC_SYSROOT_RELATIVE_ARCH_INCLUDE_PATH ${GLIBC_SYSROOT_RELATIVE_INCLUDE_PATH})
     else()
-      # Determine the location of glibc headers based on the target.
       set(GLIBC_SYSROOT_RELATIVE_INCLUDE_PATH "/usr/include")
       set(GLIBC_SYSROOT_RELATIVE_ARCH_INCLUDE_PATH ${GLIBC_SYSROOT_RELATIVE_INCLUDE_PATH})
     endif()

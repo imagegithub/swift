@@ -18,7 +18,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#if (defined(__ELF__) || defined(__ANDROID__)) && !defined(__HAIKU__)
+#if defined(__ELF__) && !defined(__HAIKU__)
 
 #include "ImageInspection.h"
 #include "swift/Runtime/Debug.h"
@@ -186,4 +186,4 @@ int swift::lookupSymbol(const void *address, SymbolInfo *info) {
   return 1;
 }
 
-#endif // defined(__ELF__) || defined(__ANDROID__)
+#endif // defined(__ELF__) && !defined(__HAIKU__)

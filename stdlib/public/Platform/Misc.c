@@ -45,6 +45,8 @@ int _swift_Platform_openat(int fd, const char *path, int oflag,
   return openat(fd, path, oflag, mode);
 }
 
+// sem_open is defined but not implemented on Fuchsia
+#if !defined(__Fuchsia__)
 SWIFT_CC(swift)
 sem_t *_swift_Platform_sem_open2(const char *name, int oflag) {
   return sem_open(name, oflag);
@@ -55,6 +57,7 @@ sem_t *_swift_Platform_sem_open4(const char *name, int oflag,
                                         mode_t mode, unsigned int value) {
   return sem_open(name, oflag, mode, value);
 }
+#endif
 
 SWIFT_CC(swift)
 int _swift_Platform_fcntl(int fd, int cmd, int value) {

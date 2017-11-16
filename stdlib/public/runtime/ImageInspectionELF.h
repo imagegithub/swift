@@ -19,7 +19,7 @@
 #ifndef SWIFT_RUNTIME_IMAGEINSPECTIONELF_H
 #define SWIFT_RUNTIME_IMAGEINSPECTIONELF_H
 
-#if defined(__ELF__) || defined(__ANDROID__)
+#if defined(__ELF__) || defined(__ANDROID__) || defined(__Fuchsia__)
 
 #include "../SwiftShims/Visibility.h"
 #include <cstdint>
@@ -35,6 +35,6 @@ namespace swift {
 SWIFT_RUNTIME_EXPORT
 void swift_addNewDSOImage(const void *addr);
 
-#endif // defined(__ELF__) || defined(__ANDROID__)
+#endif // defined(__ELF__) || defined(__ANDROID__) || defined(__Fuchsia__)
 
 #endif // SWIFT_RUNTIME_IMAGE_INSPECTION_ELF_H

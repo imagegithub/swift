@@ -17,7 +17,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#if defined(__ELF__) || defined(__ANDROID__)
+#if defined(__ELF__) || defined(__ANDROID__) || defined(__Fuchsia__)
 
 #include "ImageInspection.h"
 #include <memory>

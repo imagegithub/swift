@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 // Currently only tested on linux but should work for any ELF platform
-#if defined(__ELF__) && defined(__linux__)
+#if defined(__ELF__) && (defined(__linux__) || defined(__Fuchsia__))
 
 #include "ImageInspection.h"
 #include <cstring>
