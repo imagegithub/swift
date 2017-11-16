@@ -95,7 +95,7 @@ static inline SWIFT_ALWAYS_INLINE
 float _swift_stdlib_remainderf(float _self, float _other) {
   return __builtin_remainderf(_self, _other);
 }
-  
+
 static inline SWIFT_ALWAYS_INLINE
 float _swift_stdlib_squareRootf(float _self) {
   return __builtin_sqrtf(_self);
