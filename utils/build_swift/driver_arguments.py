@@ -1135,6 +1135,11 @@ iterations with -O",
         help="coverage database to use when prioritizing testing",
         metavar="PATH")
 
+    parser.add_argument(
+        "--use-lld-linker",
+        help="use lld linker instead of gold for Linux toolchains",
+        action=arguments.action.enable)
+
     return parser
 
 
