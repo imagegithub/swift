@@ -1013,6 +1013,17 @@ static void getRuntimeLibraryPath(SmallVectorImpl<char> &runtimeLibPath,
                           getPlatformNameForTriple(TC.getTriple()));
 }
 
+/// On Darwin we link fat libs in the root of the library path and on other OS
+/// targets we look up libraries in the target arch's subfolder.
+static void getRuntimeLibraryPathWithArch(SmallVectorImpl<char> &runtimeLibPath,
+                                           const llvm::opt::ArgList &args,
+                                           const ToolChain &TC) {
+  getRuntimeLibraryPath(runtimeLibPath, args, TC);
+  llvm::sys::path::append(runtimeLibPath,
+    swift::getMajorArchitectureName(TC.getTriple()));
+
+}
+
 static void getClangLibraryPathOnDarwin(SmallVectorImpl<char> &libPath,
                                         const ArgList &args,
                                         const ToolChain &TC) {
@@ -1034,8 +1045,8 @@ static void getClangLibraryPathOnLinux(SmallVectorImpl<char> &libPath,
 /// Get the runtime library link path for static linking,
 /// which is platform-specific and found relative to the compiler.
 static void getRuntimeStaticLibraryPath(SmallVectorImpl<char> &runtimeLibPath,
-                                  const llvm::opt::ArgList &args,
-                                  const ToolChain &TC) {
+                                        const llvm::opt::ArgList &args,
+                                        const ToolChain &TC) {
   // FIXME: Duplicated from CompilerInvocation, but in theory the runtime
   // library link path and the standard library module import path don't
   // need to be the same.
@@ -1051,6 +1062,18 @@ static void getRuntimeStaticLibraryPath(SmallVectorImpl<char> &runtimeLibPath,
   }
   llvm::sys::path::append(runtimeLibPath,
                           getPlatformNameForTriple(TC.getTriple()));
+}
+
+/// On Darwin we link fat libs in the root of the library path and on other OS
+/// targets we look up libraries in the target arch's subfolder.
+static void getRuntimeStaticLibraryPathWithArch(
+    SmallVectorImpl<char> &runtimeLibPath,
+    const llvm::opt::ArgList &args,
+    const ToolChain &TC) {
+  getRuntimeStaticLibraryPath(runtimeLibPath, args, TC);
+  llvm::sys::path::append(runtimeLibPath,
+    swift::getMajorArchitectureName(TC.getTriple()));
+
 }
 
 ToolChain::InvocationInfo
@@ -1474,7 +1497,7 @@ toolchains::GenericUnix::constructInvocation(const InterpretJobAction &job,
   InvocationInfo II = ToolChain::constructInvocation(job, context);
 
   SmallString<128> runtimeLibraryPath;
-  getRuntimeLibraryPath(runtimeLibraryPath, context.Args, *this);
+  getRuntimeLibraryPathWithArch(runtimeLibraryPath, context.Args, *this);
 
   addPathEnvironmentVariableIfNeeded(II.ExtraEnvironment, "LD_LIBRARY_PATH",
                                      ":", options::OPT_L, context.Args,
@@ -1532,20 +1555,16 @@ bool toolchains::GenericUnix::shouldProvideRPathToLinker() const {
 
 std::string toolchains::GenericUnix::getPreInputObjectPath(
     StringRef RuntimeLibraryPath) const {
-  // On Linux and FreeBSD and Haiku (really, ELF binaries) we need to add objects
-  // to provide markers and size for the metadata sections.
+  // On Elf platforms we need to add sentinel objects to provide markers and
+  // size for the metadata sections.
   SmallString<128> PreInputObjectPath = RuntimeLibraryPath;
-  llvm::sys::path::append(PreInputObjectPath,
-      swift::getMajorArchitectureName(getTriple()));
   llvm::sys::path::append(PreInputObjectPath, "swift_begin.o");
   return PreInputObjectPath.str();
 }
 
 std::string toolchains::GenericUnix::getPostInputObjectPath(
     StringRef RuntimeLibraryPath) const {
-  SmallString<128> PostInputObjectPath = RuntimeLibraryPath;
-  llvm::sys::path::append(PostInputObjectPath,
-      swift::getMajorArchitectureName(getTriple()));
+  SmallString<128> PostInputObjectPath = RuntimeLibraryPath;;
   llvm::sys::path::append(PostInputObjectPath, "swift_end.o");
   return PostInputObjectPath.str();
 }
@@ -1630,12 +1649,12 @@ toolchains::GenericUnix::constructInvocation(const LinkJobAction &job,
   SmallString<128> StaticRuntimeLibPath;
   // Path to swift_begin.o and swift_end.o.
   SmallString<128> ObjectLibPath;
-  getRuntimeLibraryPath(SharedRuntimeLibPath, context.Args, *this);
+  getRuntimeLibraryPathWithArch(SharedRuntimeLibPath, context.Args, *this);
 
   // -static-stdlib uses the static lib path for libswiftCore but
   // the shared lib path for swift_begin.o and swift_end.o.
   if (staticExecutable || staticStdlib) {
-    getRuntimeStaticLibraryPath(StaticRuntimeLibPath, context.Args, *this);
+    getRuntimeStaticLibraryPathWithArch(StaticRuntimeLibPath, context.Args, *this);
   }
 
   if (staticExecutable) {
@@ -1691,6 +1710,7 @@ toolchains::GenericUnix::constructInvocation(const LinkJobAction &job,
     Arguments.push_back(context.Args.MakeArgString(StaticRuntimeLibPath));
 
     SmallString<128> linkFilePath = StaticRuntimeLibPath;
+    llvm::sys::path::remove_filename(linkFilePath); // remove arch name
     llvm::sys::path::append(linkFilePath, "static-executable-args.lnk");
     auto linkFile = linkFilePath.str();
 
@@ -1704,6 +1724,7 @@ toolchains::GenericUnix::constructInvocation(const LinkJobAction &job,
     Arguments.push_back(context.Args.MakeArgString(StaticRuntimeLibPath));
 
     SmallString<128> linkFilePath = StaticRuntimeLibPath;
+    llvm::sys::path::remove_filename(linkFilePath); // remove arch name
     llvm::sys::path::append(linkFilePath, "static-stdlib-args.lnk");
     auto linkFile = linkFilePath.str();
     if (llvm::sys::fs::is_regular_file(linkFile)) {
@@ -1738,6 +1759,7 @@ toolchains::GenericUnix::constructInvocation(const LinkJobAction &job,
 
   if (context.Args.hasArg(options::OPT_profile_generate)) {
     SmallString<128> LibProfile(SharedRuntimeLibPath);
+    llvm::sys::path::remove_filename(LibProfile); // remove arch name
     llvm::sys::path::remove_filename(LibProfile); // remove platform name
     llvm::sys::path::append(LibProfile, "clang", "lib");
 
