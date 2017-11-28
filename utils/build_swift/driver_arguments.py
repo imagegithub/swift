@@ -263,6 +263,12 @@ def create_argument_parser():
         action=arguments.action.concat, type=arguments.type.shell_split,
         default=None)
     targets_group.add_argument(
+        "--extra-stdlib-deployment-targets",
+        help="list of additional targets to cross-compile the Swift standard "
+             "library for in addition to default",
+        action=arguments.action.concat, type=arguments.type.shell_split,
+        default=None)
+    targets_group.add_argument(
         "--build-stdlib-deployment-targets",
         help="A space-separated list that filters which of the configured "
              "targets to build the Swift standard library for, or 'all'.",

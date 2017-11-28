@@ -507,6 +507,7 @@ EXPECTED_OPTIONS = [
     AppendOption('--extra-cmake-options'),
     AppendOption('--extra-swift-args'),
     AppendOption('--stdlib-deployment-targets'),
+    AppendOption('--extra-stdlib-deployment-targets'),
     AppendOption('--test-paths'),
 
     UnsupportedOption('--build-jobs'),
